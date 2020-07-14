@@ -2,7 +2,7 @@
 <br>A simple package manager written in ruby
 
 ### Install
-run 'sh impulse.build'
+run `sh impulse.build`
 
 ### Help
 run `amethyst -h`
