@@ -5,6 +5,7 @@ require 'optparse'
 require 'ostruct'
 require 'rubygems/package'
 require 'zlib'
+require 'fileutils'
 
 package_upstream = 'https://jakeroggenbuck.github.io/impulse/'
 config_directory = '/home/jake/.config/amethyst/'
@@ -17,24 +18,49 @@ end
 
 class Package
   def initialize(url, name, is_verbose)
-    @package_url = url + name
     @package_name = name
     @verbose_install = is_verbose
+    @tar_name = name + '.tar.gz'
+    @tar_url = url + @tar_name
+    @tar_full_path = '/tmp/' + @tar_name
+    @stage_dir = '/tmp/' + @package_name
   end
   def download()
-    puts @package_url
-    package = HTTP.get @package_url + '.tar.gz'
-    File.open('/tmp/' + @package_name + '.tar.gz', 'w') { |file| file.write(package) }
+    if @verbose_install
+      puts 'Downloading from ' + @tar_url
+    end
+    package = HTTP.get @tar_url
+    File.open(@tar_full_path, 'w') { |file| file.write(package) }
+    if @verbose_install
+      puts 'Downloaded successfully'
+    end
   end
   def install()
-    tar_extract = Gem::Package::TarReader.new(Zlib::GzipReader.open('/tmp/' + @package_name + '.tar.gz'))
-    tar_extract.rewind
-    if @verbose_install
-      tar_extract.each do |entry|
-        puts entry.full_name
-      end
+    tar = File.open(@tar_full_path, 'rb')
+    if File.directory?(@stage_dir)
+      FileUtils.rm_rf(@stage_dir)
     end
-    tar_extract.close
+    Dir.mkdir '/tmp/' + @package_name
+    tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
+    if @verbose_install
+      puts 'Extracted successfully'
+    end
+    Dir.chdir(@stage_dir)
+    tar_dir = Dir.glob('*').select { |f| File.path f }
+    Dir.chdir(tar_dir[0])
+    print 'See diff? [Y/n] '
+    get_diff = gets
+    if get_diff
+      system('less impulse.build')
+    end
+    print 'Finish install? [Y/n] '
+    finish_install = gets
+    if finish_install 
+      system('sudo sh impulse.build')
+    end
+    if @verbose_install
+      puts 'Installed successfully'
+    end
   end
 end
 
