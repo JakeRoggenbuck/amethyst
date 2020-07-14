@@ -5,6 +5,7 @@ require 'optparse'
 require 'ostruct'
 require 'rubygems/package'
 require 'zlib'
+require 'colorize'
 require 'fileutils'
 
 package_upstream = 'https://jakeroggenbuck.github.io/impulse/'
@@ -12,7 +13,6 @@ config_directory = '/home/jake/.config/amethyst/'
 
 def update_list(url, directory)
   package_list = HTTP.get url
-  package_list = JSON.parse(package_list)
   File.open(directory + 'list.json', 'w') { |file| file.write(package_list) }
 end
 
@@ -28,7 +28,7 @@ class Package
     puts 'Downloading from ' + @tar_url
     package = HTTP.get @tar_url
     File.open(@tar_full_path, 'w') { |file| file.write(package) }
-    puts 'Downloaded successfully'
+    puts 'Downloaded successfully'.green
   end
   def install()
     tar = File.open(@tar_full_path, 'rb')
@@ -37,21 +37,21 @@ class Package
     end
     Dir.mkdir '/tmp/' + @package_name
     tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
-    puts 'Extracted successfully'
+    puts 'Extracted successfully'.green
     Dir.chdir(@stage_dir)
     tar_dir = Dir.glob('*').select { |f| File.path f }
     Dir.chdir(tar_dir[0])
     print 'See diff? [Y/n] '
     get_diff = gets
-    if get_diff
+    if get_diff.chomp == "Y" or get_diff.chomp == "y"
       system('less impulse.build')
     end
     print 'Finish install? [Y/n] '
     finish_install = gets
-    if finish_install 
+    if finish_install.chomp == "Y" or finish_install.chomp == "y"
       system('sudo sh impulse.build')
+      puts 'Installed successfully'.green
     end
-    puts 'Installed successfully'
   end
 end
 
@@ -67,6 +67,18 @@ def list_exists(url, directory)
   end
 end
 
+def search_list(name, config)
+  file = File.read(config)
+  data = JSON.parse(file)
+  packages = data.each { |x| 
+    if x[1]["name"] == name 
+      puts x[1]["name"].green + "\n-- " + x[1]["desc"].green
+    else 
+      puts x[1]["name"] + "\n-- " + x[1]["desc"]
+    end
+  }
+end
+
 directory_exists(config_directory)
 list_exists(package_upstream + 'list.json', config_directory)
 
@@ -79,6 +91,10 @@ end.parse!
 
 if options.update
   update_list(package_upstream + 'list.json', config_directory)
+end
+
+if options.search
+  search_list(options.search, config_directory + 'list.json')
 end
 
 if options.install
