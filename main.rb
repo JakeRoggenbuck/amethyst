@@ -17,23 +17,18 @@ def update_list(url, directory)
 end
 
 class Package
-  def initialize(url, name, is_verbose)
+  def initialize(url, name)
     @package_name = name
-    @verbose_install = is_verbose
     @tar_name = name + '.tar.gz'
     @tar_url = url + @tar_name
     @tar_full_path = '/tmp/' + @tar_name
     @stage_dir = '/tmp/' + @package_name
   end
   def download()
-    if @verbose_install
-      puts 'Downloading from ' + @tar_url
-    end
+    puts 'Downloading from ' + @tar_url
     package = HTTP.get @tar_url
     File.open(@tar_full_path, 'w') { |file| file.write(package) }
-    if @verbose_install
-      puts 'Downloaded successfully'
-    end
+    puts 'Downloaded successfully'
   end
   def install()
     tar = File.open(@tar_full_path, 'rb')
@@ -42,9 +37,7 @@ class Package
     end
     Dir.mkdir '/tmp/' + @package_name
     tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
-    if @verbose_install
-      puts 'Extracted successfully'
-    end
+    puts 'Extracted successfully'
     Dir.chdir(@stage_dir)
     tar_dir = Dir.glob('*').select { |f| File.path f }
     Dir.chdir(tar_dir[0])
@@ -58,9 +51,7 @@ class Package
     if finish_install 
       system('sudo sh impulse.build')
     end
-    if @verbose_install
-      puts 'Installed successfully'
-    end
+    puts 'Installed successfully'
   end
 end
 
@@ -84,7 +75,6 @@ OptionParser.new do |opt|
   opt.on('-U', '--update', 'Update list') { |o| options.update = o }
   opt.on('-S', '--search SEARCH', 'Search cached list') { |o| options.search = o }
   opt.on('-I', '--install INSTALL', 'Install package') { |o| options.install = o }
-  opt.on('-V', '--verbose', 'Verbose output') { |o| options.verbose = o }
 end.parse!
 
 if options.update
@@ -92,7 +82,7 @@ if options.update
 end
 
 if options.install
-  pack = Package.new(package_upstream, options.install, options.verbose)
+  pack = Package.new(package_upstream, options.install)
   pack.download() 
   pack.install() 
 end
