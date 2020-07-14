@@ -12,8 +12,10 @@ package_upstream = 'https://jakeroggenbuck.github.io/impulse/'
 config_directory = '/home/jake/.config/amethyst/'
 
 def update_list(url, directory)
+  puts "Pulling " + url
   package_list = HTTP.get url
   File.open(directory + 'list.json', 'w') { |file| file.write(package_list) }
+  puts "Downloaded lits.json to ".green + directory.green
 end
 
 class Package
