@@ -8,17 +8,22 @@ require 'zlib'
 require 'colorize'
 require 'fileutils'
 
+# Set global url and path
 package_upstream = 'https://jakeroggenbuck.github.io/impulse/'
 config_directory = '/home/jake/.config/amethyst/'
 
+# Pull list and save it to the directory given as an arg
 def update_list(url, directory)
   puts "Pulling " + url
   package_list = HTTP.get url
+  # Saves the file to list.json
   File.open(directory + 'list.json', 'w') { |file| file.write(package_list) }
   puts "Downloaded lits.json to ".green + directory.green
 end
 
+# An Object for packages
 class Package
+  # Set some Object specific names and locations
   def initialize(url, name)
     @package_name = name
     @tar_name = name + '.tar.gz'
@@ -26,28 +31,41 @@ class Package
     @tar_full_path = '/tmp/' + @tar_name
     @stage_dir = '/tmp/' + @package_name
   end
+  # Pull the package from the url with the name
   def download()
     puts 'Downloading from ' + @tar_url
+    # Pulls file with url @tar_url
     package = HTTP.get @tar_url
+    # Writes it to the path @tar_full_path
     File.open(@tar_full_path, 'w') { |file| file.write(package) }
     puts 'Downloaded successfully'.green
   end
+  # Install the package in form of tar.gz
   def install()
+    # Opens the tar
     tar = File.open(@tar_full_path, 'rb')
+    # Check if a stage directory exists
     if File.directory?(@stage_dir)
+      # Removes the stage_dir
       FileUtils.rm_rf(@stage_dir)
     end
+    # Makes a new stage dir
     Dir.mkdir '/tmp/' + @package_name
+    # Gets the contents of the tar and extracts it to the stage dir
     tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
     puts 'Extracted successfully'.green
+    # Navigates to stage_dir
     Dir.chdir(@stage_dir)
+    # Finds and navigates to the directory created by the tar
     tar_dir = Dir.glob('*').select { |f| File.path f }
     Dir.chdir(tar_dir[0])
+    # Show install diffs in less if wanted
     print 'See diff? [Y/n] '
     get_diff = gets
     if get_diff.chomp == "Y" or get_diff.chomp == "y"
       system('less impulse.build')
     end
+    # Finish install or don't run install script
     print 'Finish install? [Y/n] '
     finish_install = gets
     if finish_install.chomp == "Y" or finish_install.chomp == "y"
@@ -57,33 +75,38 @@ class Package
   end
 end
 
+# Makes a local directory if one does not exist
 def directory_exists(directory)
   unless File.directory?(directory)
     Dir.mkdir directory
   end
 end
 
+# Pulls the list if one does not exist locally
 def list_exists(url, directory)
   unless File.file?(directory + 'list.json')
     update_list(url, directory)
   end
 end
 
+# Search the package list json for a package by name
 def search_list(name, config)
   file = File.read(config)
   data = JSON.parse(file)
-  packages = data.each { |x| 
-    if x[1]["name"] == name 
+  packages = data.each { |x|
+    if x[1]["name"] == name
       puts x[1]["name"].green + "\n-- " + x[1]["desc"].green
-    else 
+    else
       puts x[1]["name"] + "\n-- " + x[1]["desc"]
     end
   }
 end
 
+# Runs the check functions
 directory_exists(config_directory)
 list_exists(package_upstream + 'list.json', config_directory)
 
+# Parse command line options when run
 options = OpenStruct.new
 OptionParser.new do |opt|
   opt.on('-U', '--update', 'Update list') { |o| options.update = o }
@@ -91,16 +114,22 @@ OptionParser.new do |opt|
   opt.on('-I', '--install INSTALL', 'Install package') { |o| options.install = o }
 end.parse!
 
+# If list update requested, update list
 if options.update
   update_list(package_upstream + 'list.json', config_directory)
 end
 
+# Searches for a package given a name
 if options.search
   search_list(options.search, config_directory + 'list.json')
 end
 
+# Creates new Package object and runs the methods
 if options.install
+  # Creates Object
   pack = Package.new(package_upstream, options.install)
-  pack.download() 
-  pack.install() 
+  # Downloads package
+  pack.download()
+  # Runs the install
+  pack.install()
 end
