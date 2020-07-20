@@ -17,8 +17,9 @@ def update_list(url, directory)
   puts "Pulling " + url
   package_list = HTTP.get url
   # Saves the file to list.json
-  File.open(directory + 'list.json', 'w') { |file| file.write(package_list) }
-  puts "Downloaded lits.json to ".green + directory.green
+  if File.open(directory + 'list.json', 'w') { |file| file.write(package_list) }
+    puts "Downloaded lits.json to ".green + directory.green
+  end
 end
 
 # An Object for packages
@@ -37,8 +38,9 @@ class Package
     # Pulls file with url @tar_url
     package = HTTP.get @tar_url
     # Writes it to the path @tar_full_path
-    File.open(@tar_full_path, 'w') { |file| file.write(package) }
-    puts 'Downloaded successfully'.green
+    if File.open(@tar_full_path, 'w') { |file| file.write(package) }
+      puts 'Downloaded successfully'.green
+    end
   end
   # Install the package in form of tar.gz
   def install()
@@ -52,8 +54,9 @@ class Package
     # Makes a new stage dir
     Dir.mkdir '/tmp/' + @package_name
     # Gets the contents of the tar and extracts it to the stage dir
-    tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
-    puts 'Extracted successfully'.green
+    if tar_extract = Gem::Package.new("").extract_tar_gz(tar, @stage_dir)
+      puts 'Extracted successfully'.green
+    end
     # Navigates to stage_dir
     Dir.chdir(@stage_dir)
     # Finds and navigates to the directory created by the tar
