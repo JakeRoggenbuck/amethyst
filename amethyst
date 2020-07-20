@@ -9,6 +9,7 @@ require 'colorize'
 require 'fileutils'
 
 # Set global url and path
+version = "1.0"
 package_upstream = 'https://jakeroggenbuck.github.io/impulse/'
 config_directory = '/home/jake/.config/amethyst/'
 
@@ -115,6 +116,7 @@ OptionParser.new do |opt|
   opt.on('-U', '--update', 'Update list') { |o| options.update = o }
   opt.on('-S', '--search SEARCH', 'Search cached list') { |o| options.search = o }
   opt.on('-I', '--install INSTALL', 'Install package') { |o| options.install = o }
+  opt.on('-v', '--version', 'Check version') { |o| options.version = o }
 end.parse!
 
 # If list update requested, update list
@@ -125,6 +127,10 @@ end
 # Searches for a package given a name
 if options.search
   search_list(options.search, config_directory + 'list.json')
+end
+
+if options.version
+  puts "Amethyst Version " + version
 end
 
 # Creates new Package object and runs the methods
