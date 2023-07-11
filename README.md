@@ -1,4 +1,5 @@
-![alt text](https://raw.githubusercontent.com/jakeroggenbuck/amethyst/master/amethyst.png)
+![light mode logo](https://raw.githubusercontent.com/jakeroggenbuck/amethyst/master/amethyst-light-mode.png#gh-light-mode-only)
+![dark mode logo](https://raw.githubusercontent.com/jakeroggenbuck/amethyst/master/amethyst-dark-mode.png#gh-light-mode-only)
 <br>A simple package manager written in ruby
 
 ### Install
